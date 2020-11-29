@@ -115,7 +115,6 @@ Install PHP with Apache
 ```
 apt-get -y install php7.3-fpm
 
-a2dismod php7.3
 a2enconf php7.3-fpm
 a2enmod proxy_fcgi
 
