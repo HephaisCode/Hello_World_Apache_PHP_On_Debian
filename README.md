@@ -7,7 +7,7 @@
 
 ## Objectif 
 
-Create page HTML for **hello-world.hephaiscode.com** with Apache and PHP File
+Create Web Page for **hello-world.hephaiscode.com** with Apache and PHP File. Access by URL  http://hello-world.hephaiscode.com .
 
 ## You need
 
@@ -54,7 +54,6 @@ apt-get -y install apache2
 apt-get -y install apache2-doc
 apt-get -y install apache2-suexec-custom
 apt-get -y install logrotate
-apt-get -y install openssl
 
 systemctl restart apache2
 
@@ -63,7 +62,6 @@ systemctl restart apache2
 Active Apache modules
 
 ```
-a2enmod ssl
 a2enmod userdir
 a2enmod suexec
 a2enmod http2
@@ -78,8 +76,6 @@ Configure Apache
 sed -i 's/\/var\/www/\/home/g' /etc/apache2/suexec/www-data
 sed -i 's/^.*ServerSignature .*$//g' /etc/apache2/apache2.conf
 sed -i '$ a ServerSignature Off' /etc/apache2/apache2.conf
-sed -i 's/^.*SSLProtocol .*$//g' /etc/apache2/apache2.conf
-sed -i '$ a SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1' /etc/apache2/apache2.conf
 
 systemctl restart apache2
 
@@ -169,19 +165,6 @@ echo '<html><body>Hello World! You are NOT secure! Please use <a href="https://h
 chown -R ${MYUSER}:www-data /home/${MYUSER}/${MYWEBFOLDER}_NOSSL
 chmod -R 750 /home/${MYUSER}/${MYWEBFOLDER}_NOSSL
 
-mkdir /home/${MYUSER}/ssl
-
-openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout /home/${MYUSER}/ssl/${MYDOMAINNAME}.key -out /home/${MYUSER}/ssl/${MYDOMAINNAME}.crt -subj "/C=FR/ST=KNOWHERE/L=KNOWHERE/O=Global Security/OU=IT Department/CN=${MYDOMAINNAME}"
-
-chown -R ${MYUSER}:www-data /home/${MYUSER}/ssl
-chmod -R 750 /home/${MYUSER}/ssl
-
-mkdir /home/${MYUSER}/${MYWEBFOLDER}_SSL
-echo '<?php echo phpinfo();?>' >> /home/${MYUSER}/${MYWEBFOLDER}_SSL/phpinfo.php
-echo '<html><body>Hello World! You are secure!</body></html>' >> /home/${MYUSER}/${MYWEBFOLDER}_SSL/index.html
-chown -R ${MYUSER}:www-data /home/${MYUSER}/${MYWEBFOLDER}_SSL
-chmod -R 750 /home/${MYUSER}/${MYWEBFOLDER}_SSL
-
 ```
 
 ## Install Domain Name
@@ -212,39 +195,6 @@ echo "</VirtualHost>" >> ${MYAPACHECONFNOSSL}
 
 a2ensite ${MYDOMAINNAME}_NOSSL.conf
 
-systemctl restart apache2
-
-MYAPACHECONFSSL=/etc/apache2/sites-available/${MYDOMAINNAME}_SSL.conf
-rm ${MYAPACHECONFSSL}
-echo "<IfModule mod_ssl.c>" >> ${MYAPACHECONFSSL}
-echo "<VirtualHost *:80>" >> ${MYAPACHECONFSSL}
-echo "Protocols h2 http/1.1" >> ${MYAPACHECONFSSL}
-echo "ServerAdmin ${MYEMAIL}" >> ${MYAPACHECONFSSL}
-echo "ServerName ${MYDOMAINNAME}" >> ${MYAPACHECONFSSL}
-echo "ServerAlias ${MYDOMAINNAME}" >> ${MYAPACHECONFSSL}
-echo "DocumentRoot /home/${MYUSER}/${MYWEBFOLDER}_SSL" >> ${MYAPACHECONFSSL}
-echo "<Directory />" >> ${MYAPACHECONFSSL}
-echo "AllowOverride All" >> ${MYAPACHECONFSSL}
-echo "</Directory>" >> ${MYAPACHECONFSSL}
-echo "<Directory /home/${MYUSER}/${MYWEBFOLDER}_SSL>" >> ${MYAPACHECONFSSL}
-echo "Options Indexes FollowSymLinks MultiViews" >> ${MYAPACHECONFSSL}
-echo "AllowOverride all" >> ${MYAPACHECONFSSL}
-echo "Require all granted" >> ${MYAPACHECONFSSL}
-echo "</Directory>" >> ${MYAPACHECONFSSL}
-echo "LogLevel error" >> ${MYAPACHECONFSSL}
-echo "ErrorLog /var/log/apache2/${MYDOMAINNAME}-ssl-error.log" >> ${MYAPACHECONFSSL}
-echo "CustomLog /var/log/apache2/${MYDOMAINNAME}-ssl-access.log combined env=NoLog" >> ${MYAPACHECONFSSL}
-echo "SSLEngine On" >> ${MYAPACHECONFSSL}
-echo 'SSLCipherSuite ALL:!DH:!EXPORT:!RC4:+HIGH:+MEDIUM:!LOW:!aNULL:!eNULL' >> ${MYAPACHECONFSSL}
-echo "SSLCertificateFile /home/${MYUSER}/ssl/${MYDOMAINNAME}.crt" >> ${MYAPACHECONFSSL}
-echo "SSLCertificateKeyFile /home/${MYUSER}/ssl/${MYDOMAINNAME}.key" >> ${MYAPACHECONFSSL}
-echo "</VirtualHost>" >> ${MYAPACHECONFSSL}
-echo "</IfModule>" >> ${MYAPACHECONFSSL}
-
-a2ensite ${MYDOMAINNAME}_SSL.conf
-
-systemctl restart apache2
-
 ```
 
 ## Hello World Test
@@ -252,10 +202,6 @@ systemctl restart apache2
 Open browser and go to page http://hello-world.hephaiscode.com 
 
 Open browser and go to page http://hello-world.hephaiscode.com/phpinfo.php
-
-Open browser and go to page https://hello-world.hephaiscode.com (auto certificate)
-
-Open browser and go to page https://hello-world.hephaiscode.com/phpinfo.php (auto certificate)
 
 ## Hello World Success
 
