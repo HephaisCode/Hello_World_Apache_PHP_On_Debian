@@ -104,7 +104,9 @@ echo '<?php echo phpinfo();?>' >> /home/helloworld/phpinfo.php
 ```
 
 ## Hello World Success
+
 Open browser and go to page http://hello-world.hephaiscode.com 
+
 Open browser and go to page http://hello-world.hephaiscode.com/phpinfo.php
 
 ![Success](https://img.shields.io/badge/Hello%20World-OK-Green.svg)
