@@ -43,7 +43,7 @@ apt-get -y dist-upgrade
 
 ## Install Apache
 
-Install Apache as WebServer to communicate with your server at **hello-world.hephaiscode.com **
+Install Apache as WebServer to communicate with your server at **hello-world.hephaiscode.com**
 
 ```
 apt-get -y install apache2
