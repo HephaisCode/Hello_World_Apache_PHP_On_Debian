@@ -1,4 +1,4 @@
-# Hello World Apache and PHP On Debian
+# "Hello World!" with Apache PHP and Cerbot on Debian 10
 
 [![OS badge](https://img.shields.io/badge/OS-Debian-red.svg)](https://www.debian.org)
 [![Server badge](https://img.shields.io/badge/Server-Apache-blue.svg)](https://httpd.apache.org)
@@ -7,7 +7,7 @@
 
 ## Objectif 
 
-Create page HTML for **hello-world.hephaiscode.com** with Apache and PHP File. PHP file use HTML format.
+Create page HTML for **hello-world.hephaiscode.com** with Apache and HTML File
 
 ## You need
 
@@ -20,12 +20,15 @@ Create page HTML for **hello-world.hephaiscode.com** with Apache and PHP File. P
 We use :
  - hello-world.hephaiscode.com for domain name of our web page
  - 51.83.45.10 the IP address of our server computer
-
+ - Create an user hephaistos with password 'Gkh23hglxVd47ShG43jh3h' (change the password!)
+ 
+ 
 ## Connect to server 
 
 Open terminal or console and go to admin your server.
 
 ```
+ssh-keygen -R 51.83.45.10
 ssh -l root 51.83.45.10 
 ```
 
@@ -39,6 +42,7 @@ Always to be update.
 apt-get update
 apt-get -y upgrade
 apt-get -y dist-upgrade
+
 ```
 
 ## Install Apache
@@ -50,66 +54,135 @@ apt-get -y install apache2
 apt-get -y install apache2-doc
 apt-get -y install apache2-suexec-custom
 apt-get -y install logrotate
-systemctl restart apache2
-```
-## Install PHP
 
-Install PHP with Apache
+systemctl restart apache2
 
 ```
-apt-get -y install php7.3-fpm
-a2dismod php7.3
-a2enconf php7.3-fpm
-a2enmod proxy_fcgi
-systemctl restart apache2
+
+Active Apache modules
+
 ```
+a2enmod ssl
+a2enmod userdir
+a2enmod suexec
+a2enmod http2
+
+systemctl restart apache2
+
+```
+
+Configure Apache
+
+```
+sed -i 's/\/var\/www/\/home/g' /etc/apache2/suexec/www-data
+sed -i 's/^.*ServerSignature .*$//g' /etc/apache2/apache2.conf
+sed -i '$ a ServerSignature Off' /etc/apache2/apache2.conf
+
+systemctl restart apache2
+
+```
+
+Configure Default Apache by rewrite virtualhost
+
+```
+chgrp -R www-data /var/www/html/
+chmod 750 /var/www/html/
+
+rm /var/www/html/index.html
+echo "<html><body>Are you lost? Ok, I'll help you, you're in front of a screen...</body></html>" > /var/www/html/index.html
+
+rm /etc/apache2/sites-available/000-default.conf
+echo '<VirtualHost *:80>' >> /etc/apache2/sites-available/000-default.conf
+echo 'ServerAdmin webmaster@localhost' >> /etc/apache2/sites-available/000-default.conf
+echo 'DocumentRoot /var/www/html' >> /etc/apache2/sites-available/000-default.conf
+echo 'ErrorLog ${APACHE_LOG_DIR}/error.log' >> /etc/apache2/sites-available/000-default.conf
+echo 'CustomLog ${APACHE_LOG_DIR}/access.log combined' >> /etc/apache2/sites-available/000-default.conf
+echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
+
+a2ensite 000-default.conf
+
+systemctl restart apache2
+
+```
+
+Test Apache 
+
+Open browser and go to page http://51.83.45.10/
+ 
+ ## Define our parameters
+ 
+ ```
+ MYUSER=hephaistos
+ MYPASSWORD=Gkh23hglxVd47ShG43jh3h
+ MYDOMAINNAME=hello-world.hephaiscode.com
+ MYEMAIL=hello-world@hephaiscode.com
+ MYWEBFOLDER=WebSite
+ ```
+ 
+ ## Create user ${MYUSER}
+ 
+ ```
+useradd --shell /bin/false ${MYUSER}
+echo ${MYUSER}:${MYPASSWORD} | chpasswd
+mkdir /home/${MYUSER}
+chown root /home/${MYUSER}
+chmod go-w /home/${MYUSER}
+
+```
+
+Add directories
+
+```
+mkdir /home/${MYUSER}/
+
+mkdir /home/${MYUSER}/${MYWEBFOLDER}_NOSSL
+
+rm /home/${MYUSER}/${MYWEBFOLDER}_NOSSL/phpinfo.php
+rm /home/${MYUSER}/${MYWEBFOLDER}_NOSSL/index.html
+echo '<html><body>Hello World! You are NOT secure!</body></html>' >> /home/${MYUSER}/${MYWEBFOLDER}_NOSSL/index.html
+chown -R ${MYUSER}:www-data /home/${MYUSER}/${MYWEBFOLDER}_NOSSL
+chmod -R 750 /home/${MYUSER}/${MYWEBFOLDER}_NOSSL
+
+```
+
 ## Install Domain Name
 
 Create the host parameters for Apache and our domains **hello-world.hephaiscode.com**
 
 ```
-mkdir /home/helloworld
-chown -R root:www-data /home/helloworld/
-chmod -R 750 /home/helloworld/
+MYAPACHECONFNOSSL=/etc/apache2/sites-available/${MYDOMAINNAME}_NOSSL.conf
+rm ${MYAPACHECONFNOSSL}
+echo "<VirtualHost *:80>" >> ${MYAPACHECONFNOSSL}
+echo "Protocols h2 http/1.1" >> ${MYAPACHECONFNOSSL}
+echo "ServerAdmin ${MYEMAIL}" >> ${MYAPACHECONFNOSSL}
+echo "ServerName ${MYDOMAINNAME}" >> ${MYAPACHECONFNOSSL}
+echo "ServerAlias ${MYDOMAINNAME}" >> ${MYAPACHECONFNOSSL}
+echo "DocumentRoot /home/${MYUSER}/${MYWEBFOLDER}_NOSSL" >> ${MYAPACHECONFNOSSL}
+echo "<Directory />" >> ${MYAPACHECONFNOSSL}
+echo "AllowOverride All" >> ${MYAPACHECONFNOSSL}
+echo "</Directory>" >> ${MYAPACHECONFNOSSL}
+echo "<Directory /home/${MYUSER}/${MYWEBFOLDER}_NOSSL>" >> ${MYAPACHECONFNOSSL}
+echo "Options Indexes FollowSymLinks MultiViews" >> ${MYAPACHECONFNOSSL}
+echo "AllowOverride all" >> ${MYAPACHECONFNOSSL}
+echo "Require all granted" >> ${MYAPACHECONFNOSSL}
+echo "</Directory>" >> ${MYAPACHECONFNOSSL}
+echo "LogLevel error" >> ${MYAPACHECONFNOSSL}
+echo "ErrorLog /var/log/apache2/${MYDOMAINNAME}-nossl-error.log" >> ${MYAPACHECONFNOSSL}
+echo "CustomLog /var/log/apache2/${MYDOMAINNAME}-nossl-access.log combined env=NoLog" >> ${MYAPACHECONFNOSSL}
+echo "</VirtualHost>" >> ${MYAPACHECONFNOSSL}
 
-rm /etc/apache2/sites-available/helloworld_ws.conf
-echo "<VirtualHost *:80>" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "Protocols h2 http/1.1" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "ServerAdmin contact@helloworld.io" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "ServerName hello-world.hephaiscode.com" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "ServerAlias hello-world.hephaiscode.com" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "DocumentRoot /home/helloworld" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "<Directory />" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "AllowOverride All" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "</Directory>" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "<Directory /home/helloworld>" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "Options Indexes FollowSymLinks MultiViews" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "AllowOverride all" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "Require all granted" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "</Directory>" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "LogLevel error" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "ErrorLog /var/log/apache2/helloworld-error.log" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "CustomLog /var/log/apache2/helloworld-ssl-access.log combined env=NoLog" >> /etc/apache2/sites-available/helloworld_ws.conf
-echo "</VirtualHost>" >> /etc/apache2/sites-available/helloworld_ws.conf
-a2ensite helloworld_ws.conf
+a2ensite ${MYDOMAINNAME}_NOSSL.conf
+
 systemctl restart apache2
+
 ```
 
-## File Script
-Write root's file in HTML. The name is index.html
-```
-rm /home/helloworld/index.php
-echo '<html><body><?php echo("Hello World!");?></body></html>' >> /home/helloworld/index.php
-```
-```
-rm /home/helloworld/phpinfo.php
-echo '<?php echo phpinfo();?>' >> /home/helloworld/phpinfo.php
-```
-
-## Hello World Success
+## Hello World Test
 
 Open browser and go to page http://hello-world.hephaiscode.com 
 
 Open browser and go to page http://hello-world.hephaiscode.com/phpinfo.php
+
+## Hello World Success
 
 ![Success](https://img.shields.io/badge/Hello%20World-OK-Green.svg)
