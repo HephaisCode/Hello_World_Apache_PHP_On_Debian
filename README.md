@@ -7,7 +7,7 @@
 
 ## Objectif 
 
-Create page HTML for **hello-world.hephaiscode.com** with Apache and HTML File
+Create page HTML for **hello-world.hephaiscode.com** with Apache and PHP File
 
 ## You need
 
