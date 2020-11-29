@@ -65,6 +65,9 @@ Create the host parameters for Apache and our domains **hello-world.hephaiscode.
 
 ```
 mkdir /home/helloworld
+chown -R root:www-data /home/helloworld/
+chmod -R 750 /home/helloworld/
+
 rm /etc/apache2/sites-available/helloworld_ws.conf
 echo "<VirtualHost *:80>" >> /etc/apache2/sites-available/helloworld_ws.conf
 echo "Protocols h2 http/1.1" >> /etc/apache2/sites-available/helloworld_ws.conf
@@ -96,10 +99,11 @@ echo '<html><body><?php echo("Hello World!");?></body></html>' >> /home/hellowor
 ```
 ```
 rm /home/helloworld/phpinfo.php
-echo '<html><body><?php phpinfo();?></body></html>' >> /home/helloworld/phpinfo.php
+echo '<?php echo phpinfo();?>' >> /home/helloworld/phpinfo.php
 ```
 
 ## Hello World Success
 Open browser and go to page http://hello-world.hephaiscode.com 
+Open browser and go to page http://hello-world.hephaiscode.com/phpinfo.php
 
 ![Success](https://img.shields.io/badge/Hello%20World-OK-Green.svg)
